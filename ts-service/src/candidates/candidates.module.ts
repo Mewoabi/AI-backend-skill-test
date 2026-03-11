@@ -10,6 +10,7 @@ import { LlmModule } from '../llm/llm.module';
 import { QueueModule } from '../queue/queue.module';
 import { CandidatesController } from './candidates.controller';
 import { CandidatesService } from './candidates.service';
+import { SummaryWorkerService } from './summary-worker.service';
 
 @Module({
   imports: [
@@ -24,8 +25,7 @@ import { CandidatesService } from './candidates.service';
     AuthModule,
   ],
   controllers: [CandidatesController],
-  // SummaryWorkerService is added in Phase B5
-  providers: [CandidatesService],
+  providers: [CandidatesService, SummaryWorkerService],
   exports: [CandidatesService],
 })
 export class CandidatesModule {}
