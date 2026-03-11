@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!--
+  briefing_report.html — server-side Jinja2 template for analyst briefing reports.
+
+  Expected context variables (supplied by ReportFormatter.build_briefing_view_model):
+    title         : str  — full report title, e.g. "Briefing Report: Acme (ACME)"
+    company_name  : str
+    ticker        : str
+    sector        : str
+    analyst_name  : str
+    summary       : str  — executive summary paragraph
+    key_points    : list[str]
+    risks         : list[str]
+    recommendation: str
+    metrics       : list[{label: str, value: str}]  — may be empty
+    generated_at  : str  — ISO-8601 UTC timestamp
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <style>
+      /* ------------------------------------------------------------------ */
+      /* Base                                                                */
+      /* ------------------------------------------------------------------ */
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body {
+        font-family: "Georgia", "Times New Roman", serif;
+        margin: 0;
+        padding: 2rem;
+        color: #1f2937;
+        background: #f9fafb;
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Layout                                                              */
+      /* ------------------------------------------------------------------ */
+      .report {
+        max-width: 860px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 3rem 3.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Header                                                              */
+      /* ------------------------------------------------------------------ */
+      .report-header {
+        border-bottom: 3px solid #1d4ed8;
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+
+      .report-header h1 {
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin: 0 0 .5rem;
+        letter-spacing: .01em;
+      }
+
+      .report-header .meta {
+        font-family: Arial, sans-serif;
+        font-size: .85rem;
+        color: #6b7280;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem 2rem;
+      }
+
+      .report-header .meta span strong {
+        color: #374151;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Sections                                                            */
+      /* ------------------------------------------------------------------ */
+      section {
+        margin-bottom: 2rem;
+      }
+
+      section h2 {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: #1d4ed8;
+        border-bottom: 1px solid #dbeafe;
+        padding-bottom: .35rem;
+        margin: 0 0 .85rem;
+      }
+
+      section p {
+        margin: 0;
+        color: #374151;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Key points & Risks                                                  */
+      /* ------------------------------------------------------------------ */
+      ol.points-list {
+        margin: 0;
+        padding-left: 1.4rem;
+        color: #374151;
+      }
+
+      ol.points-list li {
+        margin-bottom: .45rem;
+      }
+
+      /* Risks get a subtle amber left-border treatment */
+      .risks-list-wrapper {
+        border-left: 4px solid #f59e0b;
+        padding-left: 1rem;
+        border-radius: 2px;
+        background: #fffbeb;
+        padding-top: .5rem;
+        padding-bottom: .5rem;
+      }
+
+      ol.risks-list {
+        margin: 0;
+        padding-left: 1.25rem;
+        color: #92400e;
+      }
+
+      ol.risks-list li {
+        margin-bottom: .45rem;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Recommendation                                                      */
+      /* ------------------------------------------------------------------ */
+      .recommendation-box {
+        background: #eff6ff;
+        border-left: 4px solid #1d4ed8;
+        border-radius: 2px;
+        padding: .85rem 1.1rem;
+        color: #1e3a8a;
+        font-style: italic;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Metrics table                                                       */
+      /* ------------------------------------------------------------------ */
+      table.metrics-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: .9rem;
+      }
+
+      table.metrics-table thead tr {
+        background: #1d4ed8;
+        color: #ffffff;
+      }
+
+      table.metrics-table thead th {
+        padding: .55rem .85rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+      }
+
+      table.metrics-table tbody tr:nth-child(odd) {
+        background: #f0f9ff;
+      }
+
+      table.metrics-table tbody td {
+        padding: .5rem .85rem;
+        color: #374151;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      table.metrics-table tbody td:last-child {
+        font-weight: 600;
+        color: #1e3a8a;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Footer                                                              */
+      /* ------------------------------------------------------------------ */
+      footer {
+        margin-top: 2.5rem;
+        padding-top: .75rem;
+        border-top: 1px solid #e5e7eb;
+        font-family: Arial, sans-serif;
+        font-size: .8rem;
+        color: #9ca3af;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: .25rem;
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Print styles                                                        */
+      /* ------------------------------------------------------------------ */
+      @media print {
+        body { background: #fff; padding: 0; }
+        .report { box-shadow: none; border: none; padding: 1.5cm; }
+        section h2 { color: #000; border-bottom-color: #000; }
+        .report-header h1 { color: #000; }
+        .report-header { border-bottom-color: #000; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="report">
+
+      <!-- ================================================================ -->
+      <!-- Header / Company information block                               -->
+      <!-- ================================================================ -->
+      <header class="report-header">
+        <h1>{{ title }}</h1>
+        <div class="meta">
+          <span><strong>Company:</strong> {{ company_name }}</span>
+          <span><strong>Ticker:</strong> {{ ticker }}</span>
+          <span><strong>Sector:</strong> {{ sector }}</span>
+          <span><strong>Analyst:</strong> {{ analyst_name }}</span>
+        </div>
+      </header>
+
+      <!-- ================================================================ -->
+      <!-- Executive Summary                                                -->
+      <!-- ================================================================ -->
+      <section aria-labelledby="summary-heading">
+        <h2 id="summary-heading">Executive Summary</h2>
+        <p>{{ summary }}</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Key Points                                                       -->
+      <!-- ================================================================ -->
+      <section aria-labelledby="key-points-heading">
+        <h2 id="key-points-heading">Key Points</h2>
+        <ol class="points-list">
+          {% for point in key_points %}
+            <li>{{ point }}</li>
+          {% endfor %}
+        </ol>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Risks                                                            -->
+      <!-- ================================================================ -->
+      <section aria-labelledby="risks-heading">
+        <h2 id="risks-heading">Risks</h2>
+        <div class="risks-list-wrapper">
+          <ol class="risks-list">
+            {% for risk in risks %}
+              <li>{{ risk }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Recommendation                                                   -->
+      <!-- ================================================================ -->
+      <section aria-labelledby="recommendation-heading">
+        <h2 id="recommendation-heading">Recommendation</h2>
+        <div class="recommendation-box">{{ recommendation }}</div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Metrics (optional — omitted when no metrics were provided)       -->
+      <!-- ================================================================ -->
+      {% if metrics %}
+      <section aria-labelledby="metrics-heading">
+        <h2 id="metrics-heading">Key Metrics</h2>
+        <table class="metrics-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for metric in metrics %}
+            <tr>
+              <td>{{ metric.label }}</td>
+              <td>{{ metric.value }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      <!-- ================================================================ -->
+      <!-- Footer / Generated timestamp                                     -->
+      <!-- ================================================================ -->
+      <footer>
+        <span>InsightOps — Internal Briefing Report</span>
+        <span>Generated: {{ generated_at }}</span>
+      </footer>
+
+    </div><!-- /.report -->
+  </body>
+</html>
