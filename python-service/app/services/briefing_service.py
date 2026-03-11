@@ -64,6 +64,29 @@ def create_briefing(db: Session, payload: BriefingCreate) -> Briefing:
     return _load_briefing(db, briefing.id)  # type: ignore[return-value]
 
 
+def list_briefings(db: Session, skip: int = 0, limit: int = 50) -> list[Briefing]:
+    """Return all briefings, newest first, with pagination support.
+
+    Args:
+        db:    Active SQLAlchemy session.
+        skip:  Number of records to skip.
+        limit: Maximum number of records to return.
+    """
+    from sqlalchemy import desc
+
+    stmt = (
+        select(Briefing)
+        .options(
+            selectinload(Briefing.points),
+            selectinload(Briefing.metrics),
+        )
+        .order_by(desc(Briefing.created_at))
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(db.execute(stmt).scalars().all())
+
+
 def get_briefing(db: Session, briefing_id: int) -> Briefing | None:
     """Fetch a single briefing by primary key, including its points and metrics.
 
