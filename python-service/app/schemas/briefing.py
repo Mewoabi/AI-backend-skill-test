@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -24,14 +25,15 @@ class BriefingCreate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    company_name: str = Field(alias="companyName", min_length=1, max_length=200)
+    # Use Annotated[..., Field(alias=...)] for Pydantic v2 alias support
+    company_name: Annotated[str, Field(alias="companyName", min_length=1, max_length=200)]
     ticker: str = Field(min_length=1, max_length=10)
     sector: str | None = Field(default=None, max_length=100)
-    analyst_name: str | None = Field(default=None, alias="analystName", max_length=120)
+    analyst_name: Annotated[str | None, Field(alias="analystName", max_length=120)] = None
     summary: str = Field(min_length=1)
     recommendation: str = Field(min_length=1)
     # At least 2 key points are required by task specification
-    key_points: list[str] = Field(alias="keyPoints", min_length=2)
+    key_points: Annotated[list[str], Field(alias="keyPoints", min_length=2)]
     # At least 1 risk is required
     risks: list[str] = Field(min_length=1)
     metrics: list[MetricInput] | None = Field(default=None)
@@ -60,7 +62,7 @@ class BriefingCreate(BaseModel):
         return items
 
     @model_validator(mode="after")
-    def validate_unique_metric_names(self) -> "BriefingCreate":
+    def validate_unique_metric_names(self) -> Self:
         """Metric names must be unique (case-insensitive) within a single briefing."""
         if self.metrics:
             names = [m.name.strip().lower() for m in self.metrics]
