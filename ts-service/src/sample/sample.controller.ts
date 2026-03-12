@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../auth/auth-user.decorator';
 import { AuthUser } from '../auth/auth.types';
@@ -6,6 +7,9 @@ import { FakeAuthGuard } from '../auth/fake-auth.guard';
 import { CreateSampleCandidateDto } from './dto/create-sample-candidate.dto';
 import { SampleService } from './sample.service';
 
+@ApiTags('sample')
+@ApiSecurity('x-user-id')
+@ApiSecurity('x-workspace-id')
 @Controller('sample')
 @UseGuards(FakeAuthGuard)
 export class SampleController {
