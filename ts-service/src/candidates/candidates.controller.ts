@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../auth/auth-user.decorator';
 import { AuthUser } from '../auth/auth.types';
@@ -26,6 +27,9 @@ import { UploadDocumentDto } from './dto/upload-document.dto';
  * requested candidate belongs to the caller's workspace before any action
  * is taken.
  */
+@ApiTags('candidates')
+@ApiSecurity('x-user-id')
+@ApiSecurity('x-workspace-id')
 @Controller('candidates')
 @UseGuards(FakeAuthGuard)
 export class CandidatesController {
