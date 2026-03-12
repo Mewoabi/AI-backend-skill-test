@@ -1,40 +1,180 @@
-# Backend Engineering Assessment Starter
+# Backend Engineering Assessment
 
-This repository is a standalone starter for the backend engineering take-home assessment.
-It contains two independent services in a shared mono-repo:
+This repository implements the backend engineering take-home assessment across two independent services:
 
-- `python-service/` (InsightOps): FastAPI + SQLAlchemy + manual SQL migrations
-- `ts-service/` (TalentFlow): NestJS + TypeORM
+- `python-service/` — **InsightOps** (FastAPI + SQLAlchemy): Mini Briefing Report Generator
+- `ts-service/` — **TalentFlow** (NestJS + TypeORM): Candidate Document Intake + Summary Workflow
 
-The repository is intentionally incomplete for assessment features. Candidates should build within the existing structure and patterns.
+Both services share a single PostgreSQL 16 database (see Docker Compose below).
+
+---
 
 ## Prerequisites
 
-- Docker
-- Python 3.12
-- Node.js 22+
-- npm
+| Tool | Version |
+|------|---------|
+| Docker | any recent |
+| Python | 3.12+ |
+| Node.js | 22+ |
+| npm | 10+ |
 
-## Start Postgres
+---
 
-From the repository root:
+## Quick Start
+
+### 1. Start PostgreSQL
 
 ```bash
 docker compose up -d postgres
 ```
 
-This starts PostgreSQL on `localhost:5432` with:
+This starts PostgreSQL on `localhost:5432`:
 
-- database: `assessment_db`
-- user: `assessment_user`
-- password: `assessment_pass`
+- Database: `assessment_db`
+- User: `assessment_user`
+- Password: `assessment_pass`
 
-## Service Guides
+---
 
-- Python service setup and commands: [python-service/README.md](python-service/README.md)
-- TypeScript service setup and commands: [ts-service/README.md](ts-service/README.md)
+### 2. Python Service (InsightOps)
 
-## Notes
+```bash
+cd python-service
 
-- Keep your solution focused on the assessment tasks.
-- Do not replace the project structure with a different architecture.
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
+
+# Run migrations
+python -m app.db.run_migrations up
+
+# Start the server (http://localhost:8000)
+python -m uvicorn app.main:app --reload --port 8000
+
+# Run tests (no database required — uses in-memory SQLite)
+python -m pytest
+```
+
+**Briefing API endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/briefings` | Create a briefing |
+| GET | `/briefings` | List all briefings |
+| GET | `/briefings/{id}` | Retrieve a briefing |
+| POST | `/briefings/{id}/generate` | Generate HTML report |
+| GET | `/briefings/{id}/html` | Fetch rendered HTML |
+
+Interactive docs: http://localhost:8000/docs
+
+---
+
+### 3. TypeScript Service (TalentFlow)
+
+```bash
+cd ts-service
+
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# Add your Gemini API key to .env (see below for how to get one)
+# GEMINI_API_KEY=your_key_here
+
+# Run migrations
+npm run migration:run
+
+# Start the server (http://localhost:3000)
+npm run start:dev
+
+# Run unit tests
+npm test
+```
+
+**Candidate API endpoints** — all require `x-user-id` and `x-workspace-id` headers:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/candidates/:id/documents` | Upload a document |
+| GET | `/candidates/:id/documents` | List documents |
+| POST | `/candidates/:id/summaries/generate` | Queue summary generation (202) |
+| GET | `/candidates/:id/summaries` | List summaries |
+| GET | `/candidates/:id/summaries/:summaryId` | Get a summary |
+
+**Auth headers example:**
+```
+x-user-id: user-1
+x-workspace-id: workspace-1
+```
+
+---
+
+## Gemini API Key Setup
+
+Summary generation uses Google's Gemini API. A free key can be obtained from Google AI Studio.
+
+1. Go to https://aistudio.google.com/apikey
+2. Create a new API key
+3. Add it to `ts-service/.env`:
+   ```
+   GEMINI_API_KEY=your_key_here
+   ```
+
+**When `GEMINI_API_KEY` is not set**, the service automatically falls back to `FakeSummarizationProvider` which returns deterministic mock responses — useful for local development and all automated tests.
+
+> **Never commit API keys.** The `.gitignore` excludes `.env` files.
+
+---
+
+## Running Tests
+
+### Python (23 tests)
+
+```bash
+cd python-service
+source .venv/bin/activate
+python -m pytest -v
+```
+
+Tests use in-memory SQLite — no PostgreSQL connection required.
+
+### TypeScript (22 tests)
+
+```bash
+cd ts-service
+npm test
+```
+
+Tests use mocked repositories and `FakeSummarizationProvider` — no PostgreSQL or Gemini API required.
+
+---
+
+## Rolling Back Migrations
+
+### Python
+
+```bash
+cd python-service
+python -m app.db.run_migrations down --steps 1
+```
+
+### TypeScript
+
+```bash
+cd ts-service
+npm run migration:revert
+```
+
+---
+
+## Notes & Design Decisions
+
+See [NOTES.md](NOTES.md) for design decisions, schema rationale, tradeoffs, and what would be improved with more time.
