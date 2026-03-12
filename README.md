@@ -71,7 +71,7 @@ python -m pytest
 | POST | `/briefings/{id}/generate` | Generate HTML report |
 | GET | `/briefings/{id}/html` | Fetch rendered HTML |
 
-Interactive docs: http://localhost:8000/docs
+**Swagger UI:** open http://localhost:8000/docs in your browser once the server is running. All endpoints are interactively testable — no auth headers required for this service.
 
 ---
 
@@ -103,17 +103,19 @@ npm test
 
 | Method | Path | Description |
 |--------|------|-------------|
+| POST | `/sample/candidates` | Create a candidate (also auto-creates workspace) |
+| GET | `/sample/candidates` | List candidates in workspace |
 | POST | `/candidates/:id/documents` | Upload a document |
 | GET | `/candidates/:id/documents` | List documents |
 | POST | `/candidates/:id/summaries/generate` | Queue summary generation (202) |
 | GET | `/candidates/:id/summaries` | List summaries |
 | GET | `/candidates/:id/summaries/:summaryId` | Get a summary |
 
-**Auth headers example:**
-```
-x-user-id: user-1
-x-workspace-id: workspace-1
-```
+**Swagger UI:** open http://localhost:3000/docs in your browser once the server is running.
+
+- Click **Authorize** (top right), enter any values for `x-user-id` and `x-workspace-id` (e.g. `user-1` / `workspace-1`), then click **Authorize** and **Close**
+- All subsequent requests from Swagger will include those headers automatically
+- To get a `candidateId`, first call `POST /sample/candidates` and copy the `id` from the response
 
 ---
 
