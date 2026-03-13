@@ -107,5 +107,5 @@ class ReportFormatter:
 
     @staticmethod
     def generated_timestamp() -> str:
-        """Return the current UTC time as an ISO-8601 string."""
-        return datetime.now(timezone.utc).isoformat()
+        """Return the current UTC time formatted for display in reports."""
+        return datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC")

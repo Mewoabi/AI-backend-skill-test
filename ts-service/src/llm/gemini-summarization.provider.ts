@@ -33,7 +33,7 @@ export class GeminiSummarizationProvider implements SummarizationProvider {
     const apiKey = this.configService.getOrThrow<string>('GEMINI_API_KEY');
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         // Request structured JSON output — reduces hallucinated formatting
         responseMimeType: 'application/json',
