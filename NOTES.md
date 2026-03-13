@@ -97,6 +97,30 @@ Unit tests mock all repository methods and the `QueueService`. The `FakeSummariz
 
 ---
 
+## Containerization
+
+Both services are containerized with Dockerfiles so the entire stack can be started via `docker compose up --build` with no local Python or Node.js installation required.
+
+**Multi-stage build for ts-service**
+The TypeScript Dockerfile uses a two-stage build. The first stage (`builder`) installs all dependencies (including dev) and compiles TypeScript via `nest build`. The second stage installs only production dependencies and copies in the compiled `dist/` output. This keeps the final image small by excluding `ts-node`, Jest, and other build-time tools from the runtime image.
+
+**Single-stage build for python-service**
+Python doesn't require a compile step, so a single stage based on `python:3.12-slim` is sufficient. Dependencies are installed via `pip install --no-cache-dir` directly into the image.
+
+**Migrations run on container startup**
+Each container's `CMD` runs the migration command before starting the application server. For Python this is `python -m app.db.run_migrations up`, for TypeScript it is `npx typeorm migration:run -d dist/src/config/typeorm.config.js`. This ensures the database schema is always up to date without requiring a separate manual step.
+
+**`depends_on` with healthcheck condition**
+Both service containers use `depends_on: postgres: condition: service_healthy` in docker-compose. This ensures PostgreSQL is confirmed to be accepting connections (via `pg_isready`) before migrations attempt to run. Without this, containers would start immediately and the migration commands would fail with connection refused errors.
+
+**Database URL override via environment**
+Inside Docker, containers communicate using the Compose service name as the hostname (`postgres` instead of `localhost`). The `DATABASE_URL` for each service is set directly in the `docker-compose.yml` environment block, overriding whatever is in the local `.env` files. This means the same codebase works both locally (using `localhost:5433`) and inside Docker (using `postgres:5432`) without any code changes.
+
+**`.dockerignore` files**
+Each service has a `.dockerignore` that excludes `.venv`, `node_modules`, `__pycache__`, `.env`, and `dist` from the build context. This prevents local development artifacts from being copied into the image and keeps the Docker build context small and fast.
+
+---
+
 ## What Would Be Improved With More Time
 
 ### Part A
