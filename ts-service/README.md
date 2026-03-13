@@ -1,18 +1,17 @@
-# TalentFlow TypeScript Service Starter
+# TalentFlow TypeScript Service
 
-NestJS starter service for the backend assessment.
+NestJS service for the backend assessment.
 
 This service includes:
 
 - Nest bootstrap with global validation
 - TypeORM + migration setup
 - Fake auth context (`x-user-id`, `x-workspace-id`)
-- Tiny workspace-scoped sample module
-- Queue abstraction module
-- LLM provider abstraction with a fake summarization provider
-- Jest test setup
-
-The assessment-specific candidate document and summary workflow is intentionally not implemented.
+- Workspace-scoped candidate module with document upload and summary generation
+- Async queue/worker flow for background LLM processing
+- Google Gemini integration with a fake provider fallback
+- Swagger UI at `/docs`
+- Jest unit tests
 
 ## Prerequisites
 
@@ -37,11 +36,9 @@ cp .env.example .env
 - `PORT`
 - `DATABASE_URL`
 - `NODE_ENV`
-- `GEMINI_API_KEY` (leave blank unless implementing a real provider)
+- `GEMINI_API_KEY` (optional - leave blank to use the fake provider for local dev and tests)
 
-Do not commit API keys or secrets.
-
-Candidates may create a free Gemini API key through Google AI Studio for the full assessment implementation.
+Do not commit API keys or secrets. A free key can be obtained from Google AI Studio (https://aistudio.google.com/apikey).
 
 ## Run Migrations
 
@@ -56,6 +53,8 @@ npm run migration:run
 cd ts-service
 npm run start:dev
 ```
+
+Once running, open http://localhost:3000/docs in your browser to access the Swagger UI. Click **Authorize** (top right), enter values for `x-user-id` and `x-workspace-id` (e.g. `user-1` / `workspace-1`), and all subsequent requests will include those headers automatically.
 
 ## Run Tests
 

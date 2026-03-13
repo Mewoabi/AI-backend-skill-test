@@ -1,17 +1,16 @@
-# InsightOps Python Service Starter
+# InsightOps Python Service
 
-FastAPI starter service for the backend assessment.
+FastAPI service for the backend assessment.
 
 This service includes:
 
 - FastAPI app bootstrap and health endpoint
-- SQLAlchemy wiring
+- SQLAlchemy wiring with relational schema for briefings, points, and metrics
 - Manual SQL migration runner
-- One small `sample_items` example feature
-- Jinja template wiring with a minimal base template
-- Pytest setup
-
-The assessment-specific briefing features are intentionally not implemented.
+- Briefing CRUD endpoints with Pydantic validation
+- HTML report generation via Jinja2 templates
+- Swagger UI at `/docs`
+- Pytest suite (23 tests, in-memory SQLite)
 
 ## Prerequisites
 
@@ -73,6 +72,8 @@ cd python-service
 source .venv/bin/activate
 python -m uvicorn app.main:app --reload --port 8000
 ```
+
+Once running, open http://localhost:8000/docs in your browser to access the Swagger UI. All endpoints are interactively testable there - no auth headers required for this service.
 
 ## Run Tests
 

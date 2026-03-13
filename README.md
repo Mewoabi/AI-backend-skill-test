@@ -34,6 +34,8 @@ This starts PostgreSQL on `localhost:5432`:
 - User: `assessment_user`
 - Password: `assessment_pass`
 
+> **Port conflict:** If you already have PostgreSQL running locally on port 5432, change the host port in `docker-compose.yml` (e.g. `"5433:5432"`) and update the `DATABASE_URL` in both `python-service/.env` and `ts-service/.env` to use the new port.
+
 ---
 
 ### 2. Python Service (InsightOps)
@@ -116,6 +118,12 @@ npm test
 - Click **Authorize** (top right), enter any values for `x-user-id` and `x-workspace-id` (e.g. `user-1` / `workspace-1`), then click **Authorize** and **Close**
 - All subsequent requests from Swagger will include those headers automatically
 - To get a `candidateId`, first call `POST /sample/candidates` and copy the `id` from the response
+
+**Verifying workspace isolation:** The service enforces that a recruiter can only access candidates belonging to their own workspace. To test this:
+
+1. Call `POST /sample/candidates` with headers `x-user-id: user-1` and `x-workspace-id: workspace-A` — note the returned `id`
+2. Call `GET /candidates/:id/documents` (or any candidates endpoint) using the same `id` but with `x-workspace-id: workspace-B`
+3. The response will be `404 Not Found` — the candidate exists but is not visible outside its own workspace
 
 ---
 

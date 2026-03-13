@@ -12,7 +12,7 @@ import {
 /**
  * Production summarization provider backed by Google's Gemini API.
  *
- * Uses `gemini-2.0-flash` for fast, cost-effective structured output.
+ * Uses `gemini-2.5-flash` for fast, cost-effective structured output.
  * The model is instructed to return a JSON object matching
  * `CandidateSummaryResult` via `responseMimeType: "application/json"`.
  *
