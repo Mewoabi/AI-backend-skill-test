@@ -22,6 +22,36 @@ Both services share a single PostgreSQL 16 database (see Docker Compose below).
 
 ## Quick Start
 
+### Option A: Run Everything with Docker Compose
+
+No Python or Node.js installation required - Docker handles all dependencies, migrations, and startup automatically.
+
+```bash
+docker compose up --build
+```
+
+This builds both service images, runs database migrations inside each container, and starts all three services. Once up:
+
+- Python service (InsightOps): http://localhost:8000/docs
+- TypeScript service (TalentFlow): http://localhost:3000/docs
+
+To use a real Gemini API key for summary generation, create a `.env` file in the repo root before running:
+
+```
+GEMINI_API_KEY=your_key_here
+```
+
+Docker Compose picks this up automatically and passes it into the ts-service container.
+
+To run in the background: `docker compose up --build -d`
+To stop all services: `docker compose down`
+
+> For active development (hot-reload, running tests, etc.) use the manual setup below - the Docker images run compiled production builds without file watching. Option B is fully independent and does not require building Docker images.
+
+---
+
+### Option B: Manual Setup (recommended for development)
+
 ### 1. Start PostgreSQL
 
 ```bash

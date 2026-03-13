@@ -16,5 +16,34 @@ services:
       timeout: 5s
       retries: 10
 
+  python-service:
+    build:
+      context: ./python-service
+    container_name: backend-assessment-python
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://assessment_user:assessment_pass@postgres:5432/assessment_db
+      APP_ENV: development
+      APP_PORT: "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ts-service:
+    build:
+      context: ./ts-service
+    container_name: backend-assessment-ts
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://assessment_user:assessment_pass@postgres:5432/assessment_db
+      PORT: "3000"
+      NODE_ENV: development
+      GEMINI_API_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
